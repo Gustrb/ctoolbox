@@ -1,6 +1,6 @@
 #pragma once
-#ifndef ARENA_H
-#define ARENA_H
+#ifndef CTOOLBOX_ARENA_H
+#define CTOOLBOX_ARENA_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,6 +41,7 @@ static inline void arena_reset(arena_t *a);
 
 void *arena_alloc(arena_t *a, size_t len);
 void *arena_calloc(arena_t *a, size_t nmemb, size_t size);
+void *arena_realloc(arena_t *a, void *ptr, size_t size);
 
 #ifdef ARENA_IMPLEMENTATION
 
@@ -161,6 +162,18 @@ void *arena_calloc(arena_t *a, size_t nmemb, size_t size)
 	if (p == NULL) return p;
 	memset(p, 0, nmemb * size);
 	return p;
+}
+
+void *arena_realloc(arena_t *a, void *ptr, size_t size)
+{
+	if (ptr == NULL) return arena_alloc(a, size);
+
+	size_t offset = (char *)ptr - a->data;
+	if (offset + size > a->cap) {
+		if (!arena_grow(a, offset + size)) return NULL;
+	}
+
+	return a->data + offset;
 }
 
 uint8_t arena_delete(arena_t *a)
